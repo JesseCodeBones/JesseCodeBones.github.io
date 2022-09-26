@@ -6,23 +6,107 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page of Jesse Chen</title>
+    <script src="/src/jquery.js"></script>
     <script src="/src/index.js"></script>
     <script src="/src/vue.js"></script>
+    <script src="/src/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/src/bootstrap.min.css">
+    
 </head>
 
 <body>
     <div id="app">
-        <div>Welcome to Jesse's Home Page</div>
+        <div class="container">
+            <h1>Welcome to Jesse's Home page</h1>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-1">
+                    <nav class="navbar navbar-default" role="navigation">
+                        <div class="navbar-header">
+                            <a class="navbar-brand" href="#">Articles</a>
+                        </div>
+                        <div>
+                            <ul class="nav navbar-nav">
+                                <li>
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            Classification
+                                            <b class="caret"></b>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="#">C++</a></li>
+                                            <li><a href="#">Kotlin</a></li>
+                                            <li><a href="#">Android</a></li>
+                                            <li><a href="#">WASM</a></li>
+                                            <li class="divider"></li>
+                                            <li><a href="#">Christian</a></li>
+                                            <li class="divider"></li>
+                                            <li><a href="#">Life Blog</a></li>
+                                        </ul>
+                                    </li>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                    </nav>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-1">
+                    <table class="table table-bordered table-striped table-hover table-dark">
+                        <caption>{{articleTitle}}</caption>
+                        <thead>
+                          <tr>
+                            <th>Index</th>
+                            <th>Title</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in articles" >
+                                <td>{{ index  }}</td>
+                                <td><a :href="`/markdowns/${articleTitle}/${index+1}.md`">{{ item }}</a></td>
+                            </tr>
+                        </tbody>
+                      </table>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         const { createApp } = Vue
-        createApp({
+        var app = createApp({
             data() {
                 return {
-                    message: 'Hello Vue!'
+                    message: 'Hello Vue!',
+                    articleLen:0,
+                    articles:[],
+                    classifications:  ["life"],
+                    articleTitle:"List"
+                }
+            },
+            methods:{
+                fetchArticles(classification){
+                    var index = 1;
+                    this.articleTitle = classification;
+                    var that = this;
+                    this.articles = [];
+                    this.articleLen = 0;
+                    function doFetch(){
+                        $.get(`/markdowns/${classification}/${index}.md`).done((data)=>{
+                            var firstLine = data.split('\n').shift();
+                            that.articles.push(firstLine);
+                            index += 1;
+                            console.log("index="+index);
+                            doFetch();
+                        }).fail((err)=>{
+                            this.articleLen = index -1;
+                        });
+                    }
+                    doFetch();
+                    console.log("fetching articles");
                 }
             }
         }).mount('#app')
+        app.fetchArticles(app.classifications[0]);
     </script>
 </body>
 </html>

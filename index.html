@@ -34,14 +34,14 @@
                                             <b class="caret"></b>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            <li><a href="#">C++</a></li>
-                                            <li><a href="#">Kotlin</a></li>
-                                            <li><a href="#">Android</a></li>
-                                            <li><a href="#">WASM</a></li>
+                                            <li><a href="#" @click="fetchArticles('c++')">C++</a></li>
+                                            <li><a href="#" @click="fetchArticles('Kotlin')">Kotlin</a></li>
+                                            <li><a href="#" @click="fetchArticles('Android')">Android</a></li>
+                                            <li><a href="#" @click="fetchArticles('WASM')">WASM</a></li>
                                             <li class="divider"></li>
-                                            <li><a href="#">Christian</a></li>
+                                            <li><a href="#" @click="fetchArticles('Christian')">Christian</a></li>
                                             <li class="divider"></li>
-                                            <li><a href="#">Life Blog</a></li>
+                                            <li><a href="#" @click="fetchArticles('life')">Life Blog</a></li>
                                         </ul>
                                     </li>
                                 </li>
@@ -82,7 +82,7 @@
                     message: 'Hello Vue!',
                     articleLen:0,
                     articles:[],
-                    classifications:  ["life"],
+                    classifications:  ["c++", "Kotlin", "Android", "WASM", "Christian", "life"],
                     articleTitle:"List"
                 }
             },
@@ -114,7 +114,7 @@
                 }
             }
         }).mount('#app')
-        app.fetchArticles(app.classifications[0]);
+        app.fetchArticles(app.classifications[5]);
     </script>
 </body>
 </html>

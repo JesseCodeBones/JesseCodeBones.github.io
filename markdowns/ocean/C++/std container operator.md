@@ -1,4 +1,107 @@
 # std 操作算法
+
+## 查找算法
+
+```C++
+using namespace std;
+int main() {
+  int num = 0;
+  vector<int> nums;
+  nums.reserve(5);
+  cout << "please input the numbers, 0 means end \n";
+  while (true) {
+    cin >> num;
+    if (num == 0) {
+      break;
+    }
+    cout << "added=" << num << endl;
+    nums.push_back(num);
+  }
+  cout << "please input the number you are looking for:\n";
+  cin >> num;
+  auto ei = nums.cend();
+  auto i = find(nums.cbegin(), ei, num);
+  if (i == ei) // the result is end iterator, not found it
+  {
+    cout << "could not found the number in inputs\n";
+  } else {
+    cout << *i << " is founded in the inputs\n";
+  }
+}
+```
+如果是用find_if可以跟一个返回值为bool的lambda表达式：  
+```C++
+  std::cin >> num;
+  auto ei = nums.cend();
+  auto i = find_if(nums.cbegin(), ei, [num](int i) { return i == num;});
+```
+
+`find_all()` 函数会返回所有符合谓词的所有item。  
+`count_if()` 判断并求数量
+`generate()` 通过方法的返回值，替换vector中的值
+
+## 生成一个2的对数的队列，并将其打印（generate()）
+
+```C++
+using namespace std;
+int main() {
+  vector<int> ints(10, 0);
+  int value = 1;
+  generate(begin(ints), end(ints), [&value] {
+    value *= 2;
+    return value;
+  });
+  for_each(cbegin(ints), cend(ints), [](int val) { cout << val << endl; });
+}
+```
+
+`find_if_not`  
+`minmax_element` find a pair with min and max value  
+`find_first_of`  find first element  
+`find_end` latest element  
+`search`  `search_n` subsequence  
+
+## 工具算法
+`all_of()` `any_of()` `none_of()` `count()` `count_if()`
+
+
+### mismatch
+std::mismatch will return a pair, it contains the first position of the two compared container.  
+so you can easily get the value that first un-equal element:  
+
+### lexicographical_compare
+the lexicographical_compare decide if the second container contain the first container from the first element, like a:`123`, b:`12345`, it will return `true`, if a:`23`, it will return `false`
+
+```C++
+  std::vector<int> a{1, 2}, b{2, 3, 4}, c{1, 2, 3, 4, 5};
+  // v1 begin, v1 end, v2 begin
+  std::cout << "compare equal = "
+            << std::equal(std::cbegin(a), std::cend(a), std::cbegin(b))
+            << std::endl;
+
+  auto print_match = [](const std::pair<std::vector<int>::const_iterator, std::vector<int>::const_iterator> &pr,
+                        const std::vector<int>::const_iterator &end_iter) {
+    if (pr.first != end_iter) // the first unmatched position == end pos, match the vector
+      std::cout << "\nFirst pair of words that differ are " << *pr.first
+                << " and " << *pr.second << std::endl;
+    else
+      std::cout << "\nRanges are identical." << std::endl;
+  };
+  print_match(std::mismatch(std::cbegin(a), std::cend(a), std::cbegin(b)), std::cend(a));
+
+  if (std::lexicographical_compare(std::cbegin(a), std::cend(a), std::cbegin(c), std::cend(c)))
+  {
+    std::cout << "first contain \n";
+  }
+
+  if (std::lexicographical_compare(std::cbegin(b), std::cend(b), std::cbegin(c), std::cend(c)))
+  {
+    std::cout << "first contain \n";
+  } else {
+    std::cout << "not first contain \n";
+  }
+  
+```
 ## transform
 
 1. 当作for_each循环修改

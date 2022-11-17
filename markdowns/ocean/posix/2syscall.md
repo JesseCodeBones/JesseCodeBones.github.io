@@ -13,3 +13,6 @@ c） 以系统调用编号对存放所有调用服务例程的列表（内核变
 果状态返回给 system_call()例程。  
 d） 从内核栈中恢复各寄存器值，并将系统调用返回值置于栈中。  
 e） 返回至外壳函数，同时将处理器切换回用户态。
+### process image
+![image](https://user-images.githubusercontent.com/56120624/202347276-0edcaa0b-63b8-47e2-be3f-bb717536c45d.png)
+

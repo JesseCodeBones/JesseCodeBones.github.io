@@ -174,4 +174,6 @@ if (flags & O_SYNC)
 个副本，其中记录了引用该 i-node 的打开文件句柄数量以及该 i-node 所在设备的主、从设
 备号，还包括一些打开文件时与文件相关的临时属性，例如：文件锁。
 
+![image](https://user-images.githubusercontent.com/56120624/202678508-7728bc9a-5432-4348-8ce3-8173ccb6fd50.png)
+
 

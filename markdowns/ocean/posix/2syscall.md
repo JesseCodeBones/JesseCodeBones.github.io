@@ -16,3 +16,14 @@ e） 返回至外壳函数，同时将处理器切换回用户态。
 ### process image
 ![image](https://user-images.githubusercontent.com/56120624/202347276-0edcaa0b-63b8-47e2-be3f-bb717536c45d.png)
 
+### 查看连接器位置
+`ldd ./cmaketest`
+```
+ldd ./cmaketest 
+	linux-vdso.so.1 (0x00007fff2afae000)
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f32a8c6a000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f32a8c4a000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f32a8a22000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f32a893b000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f32a8ead000)
+``` 

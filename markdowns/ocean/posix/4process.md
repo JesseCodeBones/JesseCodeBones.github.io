@@ -53,3 +53,38 @@ int main() {
 
 ![image](https://user-images.githubusercontent.com/56120624/202970904-3ba47267-a08b-416f-9d00-c5d076e22469.png)
 
+任一时刻，每个程序仅有部分页需要驻留在物理内存页帧中。这些页构成了所谓驻留集（resident set）。程序未使用的页拷贝保存在交换区（swap area）内—这是磁盘空间中的保留区域，作为计算机 RAM 的补充—仅在需要时才会载入物理内存。若进程欲访问的页面目前并未驻留在物理内存中，将会发生页面错误（page fault），内核即刻挂起进程的执行，同时从磁盘中将该页面载入内存。  
+
+## 共享内存
+内存共享常发生于如下两种场景。 –执行同一程序的多个进程，可共享一份（只读的）程序代码副本。当多个程序执 行相同的程序文件（或加载相同的共享库）时，会隐式地实现这一类型的共享。 –进程可以使用 shmget()和 mmap()系统调用显式地请求与其他进程共享内存区。 这么做是出于进程间通信的目的。  
+
+## 命令行
+查看莫个进程的命令行
+```
+/proc/2448$ cat ./cmdline 
+/usr/share/code/code --type=zygote --enable-crashpad --enable-crashpad
+/proc/2448$ cat ./environ
+SHELL=/bin/bashSESSION_MANAGER=local/jesse-VirtualBox...
+```
+可以可使用`extern char **environ`访问environment
+```
+extern char ** environ;
+int main() {
+  char * result = getenv("LC_NUMERIC");
+  char ** env = environ;
+  for (env; *env; env++)
+  {
+     std::cout << *env << std::endl;
+  }
+  std::cout << result << std::endl;
+}
+```
+设置environment  
+`putenv(char *) // key=value`
+`setenv(char * name, char * value)` 
+`unsetenv(char * name)`  
+setenv()函数和 unsetenv()函数均来自 BSD，不如 putenv()函数使用普遍。尽管起初的POSIX.1 标准和 SUSv2 并未定义这两个函数，但 SUSv3 已将其纳入规范。  
+
+## setjmp & longjmp
+C 语言的 goto 语句存在一个限制，即不能从当前函数跳转到另一函数。  
+

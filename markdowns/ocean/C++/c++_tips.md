@@ -9,3 +9,6 @@ void printMemoryMap() {
   }
 }
 ```
+
+### 编译器命令行加宏
+`cc -D_MY_MICRA_=64 test.c`  

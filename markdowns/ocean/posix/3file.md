@@ -147,7 +147,8 @@ SEEK_END
 件时加入 O_APPEND 标志就可以保证这一点  
 有些文件系统（例如 NFS）不支持 O_APPEND 标志。在这种情况下，内核会选择
 按如上代码所示的方式，施之以非原子操作的调用序列，从而可能导致上述的文件脏写
-入问题。
+入问题。  
+O_EXCL至关重要  
 ## fcntl 
 fcntl()的用途之一是针对一个打开的文件，获取或修改其访问模式和状态标志  
 ```
@@ -176,4 +177,80 @@ if (flags & O_SYNC)
 
 ![image](https://user-images.githubusercontent.com/56120624/202678508-7728bc9a-5432-4348-8ce3-8173ccb6fd50.png)
 
+## dup & dup2
+dup()调用复制一个打开的文件描述符 oldfd，并返回一个新描述符，二者都指向同一打开
+的文件句柄。系统会保证新描述符一定是编号值最低的未用文件描述符。  
+dup2()系统调用会为 oldfd 参数所指定的文件描述符创建副本，其编号由 newfd 参数指定。
+如果由 newfd 参数所指定编号的文件描述符之前已经打开，那么 dup2()会首先将其关闭。  
 
+## pread & pwrite
+系统调用 pread()和 pwrite()完成与 read()和 write()相类似的工作，只是前两者会在 offset 参数
+所指定的位置进行文件 I/O 操作，而非始于文件的当前偏移量处，且它们不会改变文件的当前
+偏移量。  
+
+## readv & writev
+
+批量读写
+
+```
+  iovec buffers[2];
+  char *data = "hello world";
+  char *data2 = "I am jesse";
+  iovec buf1{data, 12};
+  iovec buf2{data2, 11};
+  buffers[0] = buf1;
+  buffers[1] = buf2;
+  writev(1, buffers, 2);
+  return 0;
+```
+原子性是 readv()的重要属性。换言之，从调用进程的角度来看，当调用 readv()时，内核
+在 fd 所指代的文件与用户内存之间一次性地完成了数据转移。这意味着，假设即使有另一进
+程（或线程）与其共享同一文件偏移量，且在调用 readv()的同时企图修改文件偏移量，readv()
+所读取的数据仍将是连续的。  
+调用 readv()成功将返回读取的字节数，若文件结束1
+将返回 0。调用者必须对返回值进行
+检查，以验证读取的字节数是否满足要求。  
+writev()调用也属于原子操作，即所有数据将一次性地从用户内存传
+输到 fd 指代的文件中。因此，在向普通文件写入数据时，writev()调用会把所有的请求数据连
+续写入文件，而不会在其他进程（或线程）写操作的影响下1
+分散地写入文件2
+。  
+
+## truncate()和 ftruncate()
+若文件当前长度大于参数 length，调用将丢弃超出部分，若小于参数 length，调用将在文
+件尾部添加一系列空字节或是一个文件空洞。  
+
+## /dev/fd
+
+对于每个进程，内核都提供有一个特殊的虚拟目录/dev/fd.  
+/dev/fd 实际上是一个符号链接，链接到 Linux 所专有的/proc/self/fd 目录  
+
+## 临时文件
+```C++
+  int fd;
+  char templatestr[] = "/tmp/anythingXXXXXX"; // system will replace XXXXXX with real file name
+  fd = mkstemp(templatestr);
+  if (fd == -1)
+    exit(1);
+  printf("generated file name is %s\n", templatestr);
+  unlink(templatestr);
+```
+
+tmpfile()函数会创建一个名称唯一的临时文件，并以读写方式将其打开。（打开该文件时
+使用了 O_EXCL 标志，以防一个可能性极小的冲突，即另一个进程已经创建了一个同名文件。）  
+tmpfile()函数执行成功，将返回一个文件流供 stdio 库函数使用。文件流关闭后将自动删
+除临时文件。为达到这一目的，tmpfile()函数会在打开文件后，从内部立即调用 unlink()来删
+除该文件名1
+。  
+
+```C++
+  FILE *tmp = tmpfile();
+  const char *jessetest = "hello world";
+  fwrite(jessetest, 12, 1, tmp);
+  fflush(tmp);
+  fseek(tmp, 0, SEEK_SET); // seek to the beginning
+  char result[12];
+  int readCnt = fread(result, 12, 1, tmp);
+  printf("%s\n", result);
+  printf("%d\n", readCnt);
+```

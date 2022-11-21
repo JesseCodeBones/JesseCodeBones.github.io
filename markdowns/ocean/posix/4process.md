@@ -49,4 +49,7 @@ int main() {
   free(d);
 }
 ```
+### 虚拟内存布局
+
+![image](https://user-images.githubusercontent.com/56120624/202970904-3ba47267-a08b-416f-9d00-c5d076e22469.png)
 

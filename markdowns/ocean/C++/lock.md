@@ -51,3 +51,36 @@ int main() {
   return 0;
 }
 ```
+## init lock
+```C++
+void initFun(){
+  std::cout << "init finished" << std::endl;
+}
+
+std::atomic<bool> initialized(false);
+std::mutex mut;
+void fun(){
+  if(!initialized) { // not initialized
+    std::unique_lock<std::mutex> lock(mut);
+    if (!initialized) // not other thread finish the initialization during aquire locker
+    {
+      initFun();
+      initialized = true;
+    }
+  }
+  std::unique_lock<std::mutex> lock(mut);
+  std::cout << "OK" << std::endl;
+}
+
+int main() {
+  std::vector<std::thread> threads;
+  for (size_t i = 0; i < 10; i++)
+  {
+    threads.push_back(std::thread{fun});
+  }
+  for (auto& thread : threads)
+  {
+    thread.join();
+  }
+}
+```

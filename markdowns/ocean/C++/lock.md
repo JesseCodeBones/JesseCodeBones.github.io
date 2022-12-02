@@ -84,3 +84,69 @@ int main() {
   }
 }
 ```
+
+## recursive_mutex 
+统一进程可以多次上锁
+
+实例：
+
+
+## 一个经典的线程不安全的案例
+```C++
+int main() {
+  int i = 0;
+  auto fun = [&i]() {
+    for (size_t j = 0; j < 10; j++) {
+      int a = i;
+      for (size_t i = 0; i < 1000; i++) {
+        if (a < 0) {
+          exit(1);
+        }
+      }
+      i = a + 1;
+    }
+  };
+  std::vector<std::thread> threads;
+  for (size_t t = 0; t < 5; t++) {
+    threads.push_back(std::thread(fun));
+  }
+
+  for (auto &thread : threads) {
+    thread.join();
+  }
+  std::cout << i << std::endl;
+  return 0;
+}
+```
+
+简单的上锁操作：  
+```C++
+int main() {
+  int i = 0;
+
+  auto fun = [&i]() {
+    for (size_t j = 0; j < 10; j++) {
+      std::lock_guard<std::recursive_mutex> lock(mtx);
+      int a = i; // 获取抢占资源
+      for (size_t i = 0; i < 1000;
+           i++) { // 延时操作，这是其他线程可能更新资源, 延时操作也放在锁内
+        if (a < 0) {
+          exit(1);
+        }
+      }
+      i = a + 1; // 更新资源，这个时候可能被其他资源写入操作，造成脏数据
+    }
+  };
+  std::vector<std::thread> threads;
+  for (size_t t = 0; t < 5; t++) {
+    threads.push_back(std::thread(fun));
+  }
+
+  for (auto &thread : threads) {
+    thread.join();
+  }
+  std::cout << i << std::endl;
+  return 0;
+}
+```
+

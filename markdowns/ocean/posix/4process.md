@@ -88,3 +88,44 @@ setenv()函数和 unsetenv()函数均来自 BSD，不如 putenv()函数使用普
 ## setjmp & longjmp
 C 语言的 goto 语句存在一个限制，即不能从当前函数跳转到另一函数。  
 
+## /proc文件信息
+|文 件 |描述（进程属性）|
+|-|-|
+|cmdline| 以\0 分隔的命令行参数|
+|cwd |指向当前工作目录的符号链接|
+|Environ| NAME=value 键值对环境列表，以\0 分隔|
+|exe |指向正在执行文件的符号链接|
+|fd |文件目录，包含了指向由进程打开文件的符号链接|
+|maps / smaps |内存映射|
+|mem |进程虚拟内存（在 I/O 操作之前必须调用 lseek()移至有效偏移量）|
+|mounts |进程的安装点|
+|root |指向根目录的符号链接|
+|status |各种信息（比如，进程 ID、凭证、内存使用量、信|号）|
+|task |为进程中的每个线程均包含一个子目录（始自 |Linux 2.6）|
+
+## /proc 子目录信息
+
+|目 录 |目录中文件表达的信息|
+|-|-|
+|/proc|各种系统信息|
+|/proc/net|有关网络和套接字的状态信息|
+|/proc/sys/fs|文件系统相关设置|
+|/proc/sys/kernel|各种常规的内核设置|
+|/proc/sys/net|网络和套接字的设置|
+|/proc/sys/vm|内存管理设置|
+|/proc/sysvipc|有关 System V IPC 对象的信息|
+
+
+## 查看uname系统信息
+```C++
+utsname n{};
+uname(&n);
+std::cout << n.sysname << "-" << n.machine << std::endl;
+```
+## 可重入函数 （reentrant）
+可重入函数就是线程安全函数
+* 同时试图更新同一全局变量或数据类型, 如malloc free
+* 将静态数据结构用于内部记账的函数也是不可重入的，比如printf()  
+* 信号处理器函数和主程序都要更新由程序员自定义的全局性数据结构，那么对于主程序而言，这种信号处理器函数就是不可重入的。
+
+

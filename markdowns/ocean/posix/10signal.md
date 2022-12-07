@@ -106,7 +106,7 @@ longjmp()来退出信号处理器函数，那么信号掩码会发生什么情�
 BSD 系统中setjmp()将信号掩码保存在其 env 参数中，而信号掩码的保存值由 longjmp()恢复  
 BSD 的实现还提供另外两个拥有 System V 语义的函数：_setjmp()和_longjmp()。  
 
-## 一场终止abort()
+## 异常终止abort()
 产生SIGABRT 信号来终止调用进程。  
 无论阻塞或者忽略 SIGABRT 信号，abort()调用均不受影响。同时规定，除非进程捕获 SIGABRT 信号后信号处理器函数尚未返回，否则 abort()必须终止进程。
 
@@ -217,3 +217,71 @@ TASK_KILLABLE：可以被杀死的TASK_UNINTERRUPTIBLE状态
 ## 当信号处理函数新型系统调用时（用户态内核态转换）
 当多个解除了阻塞的信号正在等待传递时，如果在信号处理器函数执行期间发生了内核态和用户态之间的切换，那么将中断此处理器函数的执行，转而去调用第二个信号处理器函数（如此递进）  
 
+## 实时信号的好处
+实时信号的信号范围有所扩大，可应用于应用程序自定义的目的。而标准信号中可供应用随意使用的信号仅有两个：SIGUSR1 和 SIGUSR2。  
+对实时信号所采取的是队列化管理。如果将某一实时信号的多个实例发送给一进程那么将会多次传递信号  
+当发送一个实时信号时，可为信号指定伴随数据（一整型数或者指针值）  
+不同实时信号的传递顺序得到保障。信号的编号越小，其优先级越高  
+
+Linux的内核定义了32个不同的实时信号，SUSV3规定不少与8个实时信号  
+
+## 发送处理实时信号
+1. 发送实时信号： `int sigqueue(pid, sig, value)`
+2. 该程序捕获信号，并针对传递给信号处理器函数的 siginfo_t 结构  
+
+实例代码：
+```C++
+static void /* Handler for signals established using SA_SIGINFO */
+siginfoHandler(int sig, siginfo_t *si, void *ucontext) {
+  /* UNSAFE: This handler uses non-async-signal-safe functions
+     (printf()); see Section 21.1.2) */
+
+  /* SIGINT or SIGTERM can be used to terminate program */
+
+  if (sig == SIGINT || sig == SIGTERM) {
+    return;
+  }
+  sleep(1);
+  printf("caught signal %d\n", sig);
+
+  printf("    si_signo=%d, si_code=%d (%s), ", si->si_signo, si->si_code,
+         (si->si_code == SI_USER)    ? "SI_USER"
+         : (si->si_code == SI_QUEUE) ? "SI_QUEUE"
+                                     : "other");
+  printf("si_value=%d\n", si->si_value.sival_int);
+  printf("    si_pid=%ld, si_uid=%ld\n", (long)si->si_pid, (long)si->si_uid);
+}
+
+int main(int argc, char *argv[]) {
+  struct sigaction sa;
+  int sig;
+  sigset_t prevMask, blockMask;
+
+  if (argc > 1 && strcmp(argv[1], "--help") == 0)
+    exit(1);
+  printf("%s: PID is %ld\n", argv[0], (long)getpid());
+
+  /* Establish handler for most signals. During execution of the handler,
+     mask all other signals to prevent handlers recursively interrupting
+     each other (which would make the output hard to read). */
+
+  sa.sa_sigaction = siginfoHandler;
+  sa.sa_flags = SA_SIGINFO;
+  sigfillset(&sa.sa_mask);
+
+  for (sig = 1; sig < NSIG; sig++)
+    if (sig != SIGTSTP && sig != SIGQUIT)
+      sigaction(sig, &sa, NULL);
+  union sigval sv;
+  sv.sival_int = 12;
+  sigqueue(getpid(), SIGRTMIN + 1, sv); // send RT signal to processor
+  sigqueue(getpid(), SIGRTMIN + 1, sv);
+  sigqueue(getpid(), SIGRTMIN + 1, sv);
+  exit(EXIT_SUCCESS);
+}
+```
+
+## sigsuspend
+sigsuspend()来挂起一个进程的执行，直至传来一个信号  
+## sigwaitinfo
+sigwaitinfo()系统调用来同步接收信号

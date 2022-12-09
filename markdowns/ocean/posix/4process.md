@@ -128,4 +128,104 @@ std::cout << n.sysname << "-" << n.machine << std::endl;
 * 将静态数据结构用于内部记账的函数也是不可重入的，比如printf()  
 * 信号处理器函数和主程序都要更新由程序员自定义的全局性数据结构，那么对于主程序而言，这种信号处理器函数就是不可重入的。
 
+## 信号定时器
+
+
+```C++
+static volatile sig_atomic_t gotAlarm = 0;
+
+int main(int argc, char **argv) {
+  struct itimerval itv;
+  clock_t preClock;
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = [](int sig) { gotAlarm = 1; };
+  if (sigaction(SIGALRM, &sa, NULL) == -1) {
+    exit(1);
+  }
+  itv.it_interval.tv_sec = 1;
+  itv.it_interval.tv_usec = 0;
+  itv.it_value.tv_sec = 1;
+  itv.it_value.tv_usec = 0;
+  if (setitimer(ITIMER_REAL, &itv, 0) == -1) {
+    exit(1);
+  }
+  clock_t prevClock = clock();
+  for (;;) {
+
+    if (gotAlarm) {
+      clock_t now = clock();
+      gotAlarm = 0;
+      std::cout << "get alarm signal from signal handler\n"
+                << now - preClock << std::endl;
+      preClock = now;
+    }
+  }
+
+  return 0;
+}
+```
+
+`alarm()`  
+调用 alarm()会覆盖对定时器的前一个设置。调用 alarm(0)可屏蔽现有定时器。
+
+## 定时器使用场景
+为阻塞操作设置超时  
+当用户在一段时间内没有输入整行命令时，可能希望取消对终端的 read()操作  
+## 休眠
+低分辨率休眠 sleep  
+考虑到可移植性，应避免将 sleep()和 alarm()以及 setitimer()混用  
+因为有些sleep的实现是基于timer的，这样会冲掉之前设置的定时器。
+## posix时钟
+调用此 API 的程序必须以-lrt 选项进行编译，也就是librt  
+clock_gettime() clock_getres() clock_settime()
+
+## posix定时器
+* 以系统调用 timer_create()创建一个新定时器，并定义其到期时对进程的通知方法。
+* 以系统调用 timer_settime()来启动或停止一个定时器。
+* 以系统调用 timer_delete()删除不再需要的定时器。  
+
+it_value 指定了定时器首次到期的时间。如果 it_interval 的任一子字段非 0，那么这就是一个周期性定时器，在经历了由 it_value 指定的初次到期后，会按这些子字段指定的频率周期性到期。如果 it_interval 的下属字段均为 0，那么这个定时器将只到期一次  
+
+## 定时器溢出
+在捕获或接收相关信号之前，定时器到期多次。这可能是因为进程再次获得调度前的延时所致  
+在接收信号后可以获取定时器溢出计数即在信号生成与接收之间发生的定时器到期额外次数  
+如果上次收到信号后定时器发生了 3 次到期，那么溢出计数是 2  
+`timer_getoverrun(timer_t timerid)`  
+
+## 线程通知
+SIGEV_THREAD 标志允许程序从一个独立的线程中调用函数来获取定时器到期通知。  
+
+## 定时文件描述符 timerfd (linux)
+因为可以使用 select()、poll()和 epoll()将这种文件描述符会同其他描述符一同进行监控  
+`timerfd_create()` `timerfd_gettime()`  `timer_settime()`  
+## timerfd
+一旦以 timerfd_settime()启动了定时器，就可以从相应文件描述符中调用 read()来读取定时器的到期信息。出于这一目的，传给 read()的缓冲区必须足以容纳一个无符号 8 字节整型  
+timerfd_settime()修改设置以后，或是最后一次执行 read()后，如果发生了一起到多起定时器到期事件，那么 read()会立即返回，且返回的缓冲区中包含了已发生的到期次数  
+如果并无定时器到期，read()会一直阻塞直至产生下一个到期。也可以执行 fcntl()的 F_SETFL 操作（5.3 节）为文件描述符设置 O_NONBLOCK 标志，这时的读动作是非阻塞式的，且如果没有定时器到期，则返回错误，并将 errno 值置为 EAGAIN。  
+
+实例，通过timerfd进行延时读写：  
+```C++
+#include <sys/timerfd.h>
+#include <time.h>
+int main(int argc, char **argv) {
+  int timerfd = timerfd_create(CLOCK_REALTIME, 0);
+  struct itimerspec its;
+  its.it_value.tv_sec = 1;
+  its.it_value.tv_nsec = 0;
+  its.it_interval.tv_sec = 0; // will not rerun
+  its.it_interval.tv_nsec = 0;
+  timerfd_settime(timerfd, 0, &its, NULL);
+  uint64_t numExp;
+  size_t s = read(timerfd, &numExp, sizeof(numExp));
+  std::cout << "run after 1 second\n";
+  if (s != sizeof(uint64_t)) {
+    exit(1);
+  }
+  return 0;
+}
+```
+
+
 

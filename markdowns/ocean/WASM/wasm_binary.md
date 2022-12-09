@@ -47,10 +47,6 @@ func的结构是 vec(locals) _ expr这里展开就是1bytes length + locals + ex
   - `89 80 80 80 00` length 9
   - `01 83 80 80 80 00 00 00 0B` 01: size 1, `83 80 80 80 00`: size, `00`, local zero, `00 0B` => {unreachable; end;}
 
-
-
-
-
 ### 大小端转换
 小端往小端或者大端往大端拷贝是可以直接用memcopy：  
 `memcpy(out_value, state_.data + state_.offset, sizeof(T));`  

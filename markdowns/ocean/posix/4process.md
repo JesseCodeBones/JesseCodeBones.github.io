@@ -227,5 +227,55 @@ int main(int argc, char **argv) {
 }
 ```
 
+## 多进程
+### fork
+fork的一般template  
+```C++
+pid_t childPid;
+  switch (childPid = fork()) {
+  case -1:
+    exit(1);
+  case 0:
+    std::cout << "handle from child process \n";
+  default:
+    std::cout << "handle from parent process \n";
+  }
+```
+如果子进程更新了文件偏移量，那么这种改变也会影响到父进程中相应的描述符  
+如果不需要这种对文件描述符的共享方式，那么在设计应用程序时，应于 fork()调用后注意两点：其一，令父、子进程使用不同的文件描述符；其二，各自立即关闭不再使用的描述符（亦即那些经由其他进程使用的描述符）。  
+
+### 调用函数而不改变进程的内存需求量
+对主进程保护的调用方式  
+```C++
+int func() {
+  std::cout << "error run \n";
+  malloc(sizeof(int)); // 存在内存泄露
+  return 1;
+}
+
+int main(int argc, char **argv) {
+  pid_t childPid;
+  int status;
+  switch (childPid = fork()) {
+  case -1:
+    exit(1);
+  case 0:
+    std::cout << "handle from child process \n";
+    func();
+    exit(0); // not 0, or 0 cannot pass other value
+  default:
+    wait(&status);
+    std::cout << "handle from parent process \n";
+    std::cout << status << std::endl;
+  }
+  return 0;
+}
+```  
+
+### 父子进程通过信号通信
+`kill(getppid(), SYNC_SIG);` // 向父进程发送信号  
+
+`sigsuspend()` // 父进程进行等待
+
 
 

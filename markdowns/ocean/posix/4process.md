@@ -277,5 +277,138 @@ int main(int argc, char **argv) {
 
 `sigsuspend()` // 父进程进行等待
 
+## 程序退出
+程序退出的细节：  
+* 关闭所有打开文件描述符、目录流、信息目录描述符以及（字符集）转换描述符（见 iconv_open(3)手册页）
+* 作为文件描述符关闭的后果之一，将释放该进程所持有的任何文件锁
+* 分离（detach）任何已连接的 System V 共享内存段, 且对应于各段的 shm_nattch 计数器值将减一
+* 进程为每个 System V 信号量所设置的 semadj 值将会被加到信号量值中
+* 如果该进程是一个管理终端（terminal）的管理进程那么系统会向该终端前台进程组中的每个进程发送 SIGHUP 信号
+* 将关闭该进程打开的任何 POSIX 有名信号量，类似于调用 sem_close()
+* 将关闭该进程打开的任何 POSIX 消息队列，类似于调用 mq_close()
+* 作为进程退出的后果之一，如果某进程组成为孤儿，且该组中存在任何已停止进程则组中所有进程都将收到 SIGHUP 信号，随之为 SIGCONT 信号
+* 移除该进程通过 mlock()或 mlockall()（50.2 节）所建立的任何内存锁
+* 取消该进程调用 mmap()所创建的任何内存映射（mapping）
+
+### atexit()注册exit清理方法
+glibc有一个非标准注册方法`on_exit()`
+
+### 进程退出的缓冲区问题
+stdio是以\n字符刷新缓冲区  
+file缓冲区是以buffer来刷新缓存
+需要在创建子进程时考虑其IO的缓存问题。  
+
+## 监控子进程
+### wait() waitpid() waitpid()
+子进程因收到信号 SIGCONT 而恢复，并以 WCONTINUED 标志调用 waitpid()  
+waitpid()可以通过type来调整wait逻辑  
+wait3()和 wait4()执行与 waitpid()类似的工作，区别在于wait3()和 wait4()在参数 rusage 所指向的结构中返回终止子进程的资源使用情况。其中包括进程使用的 CPU 时间总量以及内存管理的统计数据。  
+pid_t wait3(int *wstatus, int options, struct rusage *rusage);  
+顺便提一嘴C语言的通用设计，rusage是调用这提前分配的内存，它负责初始化和销毁，而这个方法只是负责将该填的数据填入结构体。  
+
+### 孤儿进程与僵尸进程
+换言之，某一子进程的父进程终止后，对 getppid()的调用将返回 1  
+在父进程执行 wait()之前，其子进程就已经终止，这将会发生什么？  
+子进程已经结束，系统仍然允许其父进程在之后的某一时刻去执行 wait()，以确定该子进程是如何终止的。内核通过将子进程转为僵尸进程（zombie）来处理这种情况。释放子进程所把持的大部分资源，以便供其他进程重新使用。该进程所唯一保留的是内核进程表中的一条记录，其中包含了子进程 ID、终止状态、资源使用数据（36.1 节）等信息。  
+另一方面，如果父进程未执行 wait()随即退出，那么 init 进程将接管子进程并自动调用 wait()从而从系统中移除僵尸进程  
+
+如果父进程创建了某一子进程，但并未执行 wait()，那么在内核的进程表中将为该子进程永久保留一条记录。如果存在大量此类僵尸进程，它们势必将填满内核进程表，从而阻碍新进程的创建。既然无法用信号杀死僵尸进程，那么从系统中将其移除的唯一方法就是杀掉它们的父进程（或等待其父进程终止）
+，此时 init 进程将接管和等待这些僵尸进程，从而从系统中将它们清理掉  
+
+在设计长生命周期的父进程（例如：会创建众多子进程的网络服务器和 Shell）时，这些语义具有重要意义。换句话说，在此类应用中，父进程应执行 wait()方法，以确保系统总是能够清理那些死去的子进程，避免使其成为长寿僵尸。如 26.3.1 节所述，父进程在处理 SIGCHLD 信号时，对 wait()的调用既可同步，也可异步。  
+
+父进程避免僵尸子进程的积累的方法：  
+* 父进程调用不带 WNOHANG 标志的 wait()，或 waitpid()方法，此时如果尚无已经终止的子进程，那么调用将会阻塞。  
+* 父进程周期性地调用带有 WNOHANG 标志的 waitpid()，执行针对已终止子进程的非阻塞式检查（轮询）。
+* 推荐使用方法：为 SIGCHLD 建立信号处理程序  
+无论一个子进程于何时终止，系统都会向其父进程发送 SIGCHLD 信号。对该信号的默认处理是将其忽略， 不过也可以安装信号处理程序来捕获它。在处理程序中，可以使用 wait() 来收拾僵尸进程。  
+由于信号处理函数存在信号阻塞的问题， 在 SIGCHLD 处理程序内部循环以 WNOHANG 标志来调用 waitpid()， 直到再无其他终止的子进程需要处理为止  
+```C++
+while (waitpid(-1, NULL, WNOHANG)) {
+    continue;
+  }
+```
+一个简单的SIGCHLD信号处理函数  
+```C++
+static void sigChildHandler(int sig) {
+  int status, savedErrorNo;
+  pid_t childPid;
+  savedErrorNo = errno;
+  std::cout << "handleing sigchld\n";
+  while ((childPid = waitpid(-1, &status, WNOHANG)) > 0) {
+    std::cout << "no hang for pid=" << childPid << ", with status=" << status
+              << std::endl;
+    numLiveChildren--;
+  }
+  errno = savedErrorNo;
+}
+int main(int argc, char **argv) {
+  struct sigaction sa;
+  sigset_t blockMask, emptyMask;
+  sa.sa_flags = 0;
+  sa.sa_handler = sigChildHandler;
+  sigemptyset(&sa.sa_mask);
+  if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+    exit(1);
+  }
+  sigemptyset(&blockMask); // block  SIGCHLD before SIGSUSPEND
+  sigaddset(&blockMask, SIGCHLD);
+  if (sigprocmask(SIG_SETMASK, &blockMask, NULL) == -1) {
+    exit(1);
+  }
+
+  for (int i = 0; i < 10; i++) {
+    switch (fork()) {
+    case -1:
+      exit(1);
+    case 0:
+      //  child process
+      sleep((rand() % 50) + 1);
+      _exit(EXIT_SUCCESS);
+    default:
+      break;
+    }
+  }
+  sigemptyset(&emptyMask);
+  int sigCount = 0;
+  while (numLiveChildren > 0) {
+    if (sigsuspend(&emptyMask) == -1 && errno != EINTR) {
+      exit(1);
+    }
+    std::cout << "waiting for sig" << std::endl;
+  }
+
+  return 0;
+}
+```
+
+### SA_NOCLDWAIT
+可在调用 sigaction()对 SIGCHLD 信号的处置进行设置时使用此标志。设置该标志的作用类似于将对 SIGCHLD 的处置置为 SIG_IGN 时的效果。  
+
+## exec库函数
+|函数|对程序文件的描述（-, p）|对参数的描述（v, l）|环境变量来源（e, -）|
+|-|-|-|-|
+|execve()|路径名|数组envp| 参数|
+|execle()|路径名|列表envp| 参数|
+|execlp()|文件名+PATH|列表调用者的|environ|
+|execvp()|文件名+PATH|数组调用者的|environ|
+|execv()|路径名|数组调用者的| environ|
+
+|excel()|路径名|列表调用者的| environ|
+
+`fexecve()` 通过打开文件描述付来运行程序  
+内核为每个文件描述符提供了执行时关闭标志 执行 exec()时，会自动关闭该文件描述符如果调用 exec()失败，文件描述符则会保持打开  
+```C++
+int fd = open("CMakeCache.txt", O_RDWR);
+  int flags = 0;
+  flags = fcntl(fd, F_GETFD);
+  std::cout << flags << std::endl;
+  flags |= FD_CLOEXEC;
+  std::cout << flags << std::endl;
+  if (fcntl(fd, F_SETFD, flags) == -1) {
+    exit(1);
+  }
+```
+
 
 

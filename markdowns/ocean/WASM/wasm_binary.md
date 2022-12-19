@@ -64,3 +64,20 @@ inline void SwapBytesSized(void* addr, size_t size) {
   }
 }
 ```
+
+## 使用Bynaryen添加一个方法
+```C++
+BinaryenType ii[2] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
+  BinaryenType params = BinaryenTypeCreate(ii, 2);
+  BinaryenType results = BinaryenTypeInt32();
+  BinaryenModuleRef module = BinaryenModuleRead(buffer, fsize);
+
+  BinaryenExpressionRef x = BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                        y = BinaryenLocalGet(module, 1, BinaryenTypeInt32());
+  BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
+  BinaryenExpressionRef callOperands2[] = {makeInt32(module, 13),
+                                           makeInt32(module, 3)};
+  BinaryenFunctionRef adder =
+      BinaryenAddFunction(module, "adder", params, results, NULL, 0, add);
+  
+```

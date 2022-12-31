@@ -3,3 +3,6 @@
 可以使用stlink utility然后进行链接，选择jtag然后频率会根据芯片不同进行调整  
 关于如果芯片上运行了非SWD模式的软件会关掉SWD模式的问题  
 可以通过将BOOT0接到5v，然后重启重新连接，让芯片启动到其他硬件硬盘上去。  
+
+## i2c stm32cubemx 
+[tutorial](https://blog.csdn.net/qq_36347513/article/details/113180162)

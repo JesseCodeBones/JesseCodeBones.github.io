@@ -65,3 +65,19 @@ pthread_t ptt;
   std::cout << "returned type from main thread-" << (char *)d << std::endl;
   return 0;
 ```
+## pthread_create时的属性控制
+pthread_create()中类型为 pthread_attr_t 的 attr 参数，其中包括：  
+线程栈的位置和大小、线程调度策略和优先级  
+示例： 
+```C++
+  pthread_t ptt;
+  pthread_attr_t ptat;
+  pthread_attr_init(&ptat);
+  pthread_attr_setstacksize(&ptat, 10240);
+  pthread_create(
+      &ptt, &ptat,
+      [](void *arg) -> void * { std::cout << "running in child thread\n"; },
+      nullptr);
+  pthread_join(ptt, nullptr);
+  pthread_attr_destroy(&ptat);
+```

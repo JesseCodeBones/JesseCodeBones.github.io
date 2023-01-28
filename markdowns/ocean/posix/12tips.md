@@ -49,3 +49,19 @@ DELEGATE(body);
 DELEGATE(feet);
 #undef DELEGATE
 ```
+### 动态定义指针引用
+```C++
+#ifdef __cplusplus
+#define BINARYEN_REF(NAME)\
+  namespace wasm {\
+  class NAME;     \
+  };              \
+  typedef class wasm::NAME* Binaryen##NAME##Ref;
+#else
+#define BINARYEN_REF(NAME) typedef struct  Binaryen##NAME* Binaryen##NAME##Ref;
+#endif
+```
+
+这个时候调用 `BINARYEN_REF(Expression);`就会生成一个`BinaryenExpressionRef` 的类型。  
+其实质是`Express *`  
+

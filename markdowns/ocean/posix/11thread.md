@@ -81,3 +81,14 @@ pthread_create()中类型为 pthread_attr_t 的 attr 参数，其中包括：
   pthread_join(ptt, nullptr);
   pthread_attr_destroy(&ptat);
 ```
+## 总结
+可使用 pthread_create()来创建线程。每个线程随后可调用 pthread_exit()独立退出。
+（如有任一线
+程调用了 exit()，那么所有线程将立即终止。
+）除非将线程标记为分离状态（例如通过调用 pthread_
+detached()）
+，其他线程要连接该线程，则必须使用 pthread_join()，由其返回遭连接线程的退出状态
+
+## 线程同步
+临界区（critical section）是指访问某一共享资源的代码片段，并且这段代码的执行应为原子（atomic）操作，亦即，同时访问同一共享资源的其他线程不应中断该片段的执行。
+

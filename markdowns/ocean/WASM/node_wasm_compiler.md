@@ -4,23 +4,4 @@ NodeJs WASM Compiler contains `Liftoff` and `Turbofan`
 ## flow
 
 ### uml: class diagram
-```plantuml
-@startuml
-(*) --> "ExecuteFunctionCompilation"
-note left: function-compiler.cc
-if "tier decision" then 
--->"ExecuteLiftoffCompilation"
-note left: liftoff-compiler.cc
--->"BrIf"
-note left: liftoff-compiler.cc
--->"emit_cond_jump"
-note left: liftoff-assembly-x64.cc
--->===B1===
-else
--->"TurbofanWasmCompilation"
--->===B1===
-endif
--->(*)
-@enduml
-
-```
+![Class Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/Zingam/Markdown-Document-UML-Use-Test/master/UML/Instance.puml)

@@ -1,5 +1,11 @@
 @startuml
-(*) --> "ExecuteFunctionCompilation"
+(*) --> "WasmEngine::NewNativeModule"
+note right: wasm-engine.cc
+--> "ExecuteJSToWasmWrapperCompilationUnits"
+note right: module-compiler.cc
+--> "CompileLazy"
+note right: module-compiler.cc
+--> "ExecuteFunctionCompilation"
 note left: function-compiler.cc
 if "tier decision" then 
 -->"ExecuteLiftoffCompilation"

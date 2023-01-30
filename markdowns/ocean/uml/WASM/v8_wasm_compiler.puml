@@ -17,6 +17,7 @@ note left: liftoff-compiler.cc
 note left: liftoff-compiler.cc
 -->"emit_cond_jump"
 note left: liftoff-assembly-x64.cc
+--> "EmitDebuggingInfo"
 -->===B1===
 else
 -->"TurbofanWasmCompilation"

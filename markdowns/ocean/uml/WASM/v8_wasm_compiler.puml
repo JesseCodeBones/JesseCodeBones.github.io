@@ -1,5 +1,8 @@
 @startuml
-(*) --> "WasmEngine::NewNativeModule"
+(*) --> "CreateGlobalTemplate"
+note right: d8.cc
+--> "CreateD8Template"
+--> "WasmEngine::NewNativeModule"
 note right: wasm-engine.cc
 --> "ExecuteJSToWasmWrapperCompilationUnits"
 note right: module-compiler.cc

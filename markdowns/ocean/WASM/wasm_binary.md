@@ -81,3 +81,9 @@ BinaryenType ii[2] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
       BinaryenAddFunction(module, "adder", params, results, NULL, 0, add);
   
 ```
+
+## Binaryen parser的主要逻辑
+`SExpressionWasmBuilder::SExpressionWasmBuilder`
+
+## Binaryen lit 测试
+`python build/bin/binaryen-lit -vv test/lit/source-map-drop.wast`  

@@ -4,6 +4,8 @@
 查询详情： `wasm-objdump -x startblock.wasm`  
 反汇编可执行文件： `wasm-objdump -d startblock.wasm`  
 打印文件头部信息： `wasm-objdump -h startblock.wasm`  
+通过wat生成wasm和source map: `wasm-opt debug.wat -o build/out.wasm -osm build/out.wasm.map -g -q`  
+通过wasm 和 source map, 打印wat信息： `wasm-opt build/out.wasm -ism build/out.wasm.map -q -o - -S`
 
 ### WASM Binary Doc 解析
 ```

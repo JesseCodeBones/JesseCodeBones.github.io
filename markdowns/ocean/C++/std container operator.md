@@ -248,3 +248,19 @@ iota() 顺序初始化 2,3,4,5...
   std::iota(std::begin(v), std::end(v), 1); // 1,2,3,4,5...10
   std::copy(std::cbegin(v), std::cend(v), std::ostream_iterator<int>(std::cout, "\n"));
 ```
+
+## 小技巧
+### unordered_map count()代替find()
+`if(map.count(key)){}`
+### 将两个vector进行排序，并将值付给第一个vector
+排序要用到< operator，确保结构体或者类重写了这个operator
+```C++
+    std::vector<BranchMapVector> result;
+    std::sort(basicBlockBranch.begin(), basicBlockBranch.end());
+    std::sort(processedDomTreeBranch.begin(), processedDomTreeBranch.end());
+    std::set_intersection(basicBlockBranch.begin(), basicBlockBranch.end(),
+                          processedDomTreeBranch.begin(), processedDomTreeBranch.end(),
+                          std::back_inserter(result));
+    
+    basicBlockBranch.swap(result);
+```

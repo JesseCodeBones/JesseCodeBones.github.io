@@ -43,3 +43,59 @@ public boolean onCreateOptionsMenu(Menu menu) {
 Activity 类提供了一个 finish()
 方法，我们在活动中调用一下这个方法就可以销毁当前活动了
 
+## activity pass parameter
+
+1. putExtra
+2. startActivityForResult
+3. bundle
+
+
+## activity resume
+应用中有一个Activity A，用户在Activity A的基础上启动了Activity B，Activity A就进入了
+停止状态，这个时候由于系统内存不足，将Activity A回收掉了，然后用户按下Back键返回
+Activity A，
+Activity中还提供了一个onSaveInstanceState()回调方法，这个方法可以保证在
+Activity被回收之前一定会被调用，因此我们可以通过这个方法来解决问题
+onSaveInstanceState()方法会携带一个Bundle类型的参数，Bundle提供了一系列的方法
+用于保存数据，比如可以使用putString()方法保存字符串，使用putInt()方法保存整型数
+据，以此类推。每个保存方法需要传入两个参数，第一个参数是键，用于后面从Bundle中取
+值，第二个参数是真正要保存的内容。
+
+这里提醒一点，Intent还可以结合Bundle一起用于传递
+数据。首先我们可以把需要传递的数据都保存在Bundle对象中，然后再将Bundle对象存放在
+Intent里。到了目标Activity之后，先从Intent中取出Bundle，再从Bundle中一一取出数据。
+
+## activity start mode
+
+分别是standard、singleTop、
+singleTask和singleInstance
+
+
+
+对于single instance模式：
+我们的程序中有一个Activity是允许其他程序调用的，如果想实现其他程序和我们的程序可以共享这个Activity的实
+例，应该如何实现呢？使用前面3种启动模式肯定是做不到的，因为每个应用程序都会有自己的
+返回栈，同一个Activity在不同的返回栈中入栈时必然创建了新的实例。而使用
+singleInstance模式就可以解决这个问题，在这种模式下，会有一个单独的返回栈来管理这个
+Activity，不管是哪个应用程序来访问这个Activity，都共用同一个返回栈，也就解决了共享
+Activity实例的问题
+
+## companion object
+```kotlin
+class SecondActivity : BaseActivity() {
+ ...
+ companion object {
+ fun actionStart(context: Context, data1: String, data2: String) {
+ val intent = Intent(context, SecondActivity::class.java)
+ intent.putExtra("param1", data1)
+ intent.putExtra("param2", data2)
+ context.startActivity(intent)
+ }
+ }
+}```
+
+start:  
+```kotlin
+button1.setOnClickListener {
+ SecondActivity.actionStart(this, "data1", "data2")
+}```

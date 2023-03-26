@@ -103,3 +103,13 @@ $ sudo vim /etc/asound.conf
 defaults.pcm.card 2  
 defaults.ctl.card 2  
   ```
+
+
+  ## camera
+  3. 通过 v4l2-ctl 命令可以看到 USB 摄像头的设备节点信息为/dev/video0
+```   
+orangepi@orangepi:~$ sudo apt update 
+   orangepi@orangepi:~$ sudo apt install -y v4l-utils 
+   orangepi@orangepi:~$ v4l2-ctl --list-devices
+    USB 2.0 Camera (usb-sunxi-ehci-1):
+     /dev/video0```

@@ -99,3 +99,90 @@ start:
 button1.setOnClickListener {
  SecondActivity.actionStart(this, "data1", "data2")
 }```
+
+如果想在kotlin中真正的使用静态方法，需要在companion object方法中加入@JvmStatic注解  
+
+## kotlin顶层方法
+
+```kotlin
+fun doSomething() {
+ println("do something")
+}
+```
+顶层方法不属于类里面，可以直接用名称调用。
+如果想在java中调用顶层方法，kotlin会创建一个和文件名一样的类，将顶层方法当作静态方法放在其中。  
+
+## 布局
+线性布局：  
+android:gravity
+用于指定文字在控件中的对齐方式，而android:layout_gravity用于指定控件在布局中的
+对齐方式。
+
+习LinearLayout中的另一个重要属性——android:layout_weight。这个属
+性允许我们使用比例的方式来指定控件的大小
+
+相对布局：  
+android:layout_alignParentLeft、
+android:layout_alignParentTop、android:layout_alignParentRight、
+android:layout_alignParentBottom、android:layout_centerInParent
+android:layout_toLeftOf
+android:layout_toRightOf
+
+帧布局：  
+所有的控件都会默认摆放在布局的左上角
+
+自定义控件
+
+
+## LayoutInflater
+`LayoutInflater``是根据布局资源文件来生成视图层级（包括子视图）的系统服务
+
+```Kotlin
+View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.view_child, null);
+frameLayout.addView(view);
+```
+
+## 自定义view group
+1. 创建一个layout布局
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<Button
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="JesseTest"
+    android:id="@+id/jessetest"
+    />
+</LinearLayout>
+```
+2. 创建一个layout类
+``` Kotlin
+package com.example.myapplication
+
+import android.content.Context
+import android.util.AttributeSet
+import android.view.LayoutInflater
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.Toast
+
+class TitleLayout(context:Context, attrs:AttributeSet):LinearLayout(context, attrs) {
+
+    init {
+        val view =  LayoutInflater.from(context).inflate(R.layout.title, this)
+        findViewById<Button>(R.id.jessetest).setOnClickListener {
+            Toast.makeText(context, "jesse test", Toast.LENGTH_LONG).show()
+        }
+    }
+}
+```
+
+3. 在其他的布局中使用自定义的布局
+```xml
+<com.example.myapplication.TitleLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:ignore="MissingConstraints" />
+```

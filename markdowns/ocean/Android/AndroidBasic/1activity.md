@@ -186,3 +186,93 @@ class TitleLayout(context:Context, attrs:AttributeSet):LinearLayout(context, att
     android:layout_height="wrap_content"
     tools:ignore="MissingConstraints" />
 ```
+
+## ListView
+基本用法：  
+```xml
+    <ListView
+    android:id="@+id/list_view_test"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"/>
+```
+```kotlin
+private val data = listOf("Apple", "Banana", "Orange", "Watermelon",
+        "Pear", "Grape", "Pineapple", "Strawberry", "Cherry", "Mango",
+        "Apple", "Banana", "Orange", "Watermelon", "Pear", "Grape",
+        "Pineapple", "Strawberry", "Cherry", "Mango")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        
+
+        val adapter = ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,data)
+        val listview = findViewById<ListView>(R.id.list_view_test);
+        listview.adapter = adapter
+    }
+```
+
+自定义listview  
+先创建自定义layout
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listview_name"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listview_age"/>
+</LinearLayout>
+```
+
+创建自定义adapter
+```kotlin
+
+class Person(val name:String, val age:Int);
+
+class PersonAdapter(context: Context,  resourceId:Int, data:List<Person>):ArrayAdapter<Person>(
+    context, resourceId, data
+){
+    inner class ViewHolder(val name: TextView, val age: TextView)
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val view:View
+        if (convertView == null) {
+            view = LayoutInflater.from(context).inflate(R.layout.customerlistview, parent, false)
+            val name = view.findViewById<TextView>(R.id.listview_name)
+            val age = view.findViewById<TextView>(R.id.listview_age)
+            val viewHolder = ViewHolder(name, age)
+            view.tag = viewHolder
+        } else {
+            view = convertView
+        }
+        val viewHolder = view.tag as ViewHolder
+        val person = getItem(position);
+        if (person != null) {
+            viewHolder.name.text = person.name
+            viewHolder.age.text = person.age.toString()
+        }
+        return view
+    }
+}
+```
+
+通过view.tag来缓存数据
+
+listview的点击事件  
+```kotlin
+listView.setOnItemClickListener { _, _, position, _ ->
+ val fruit = fruitList[position]
+ Toast.makeText(this, fruit.name, Toast.LENGTH_SHORT).show()
+ }
+```
+
+## RecyclerView
+
+

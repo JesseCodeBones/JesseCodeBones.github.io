@@ -44,5 +44,10 @@ if(ENABLE_SANITIZE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined,pointer-compare")
 endif()
 ```
+特别注意，这些设置要放在add_executable之前
+
+## Clang-format check
+
+`find src test  -regex ".*\\.\\(cpp\\|hpp\\|c\\|h\\)" | xargs clang-format -style=file --Werror --dry-run`  
 
 

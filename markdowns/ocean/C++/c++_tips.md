@@ -70,7 +70,7 @@ public:
   }
   void test(uint32_t& me){}
   template<typename T>
-  void printMeBest(T&& me){ // 函数定义层面的完美转发
+  void printMeBest(T&& me){ // 函数定义层面的完美转发, 涉及到引用折叠
     printf("best me=%d\n", static_cast<uint32_t>(me));
   }
   ~JesseTest() { printf("destruct\n"); }

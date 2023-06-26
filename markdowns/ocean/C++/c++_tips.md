@@ -92,3 +92,22 @@ int main() {
   test.printMeBest(42);
 }
 ```
+
+### 让方法只接收4字节参数
+```C++
+template<typename T>
+void only4BytesParam(T&& value) {
+  static_assert(sizeof(T) == 4, "only 4 byte param");
+  printf("hello=%d\n", static_cast<uint32_t>(value));
+}
+
+int main() {
+  uint32_t v1 = 12U;
+  only4BytesParam(v1);
+  int32_t v2 = -1;
+  only4BytesParam(v2);
+  only4BytesParam(0xffffffff);
+  uint64_t hello = 0x1;
+  //only4BytesParam(hello); compile error
+}
+```

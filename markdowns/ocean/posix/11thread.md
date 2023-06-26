@@ -266,4 +266,53 @@ pthread_getspecific()。调用函数 pthread_setspecific()实际上是对 Pthrea
 `pthread_key_create(pthread_key_t* key, void(*destructor)(void *));`
 只要线程终止时与 key 的关联值不为 NULL，Pthreads API 会自动执行解构函数并将与key 的关联值作为参数传入解构函数。  
 
+### 主线程中处理子线程的exception
+下面的代码是不可以的
+```C++
+int main() {
+  std::thread thread([]() {
+    for (unsigned int i = 0U; i < 3U; ++i) {
+      std::cout << std::to_string(i) << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(1U));
+    }
+    throw std::runtime_error("test");
+  });
+  std::this_thread::sleep_for(std::chrono::seconds(4U));
+  std::cout << "sleep finished\n"; // this will not be printed
+  try {
+    thread.join();
+  } catch (...) {
+    std::cout << "error happened during child thread\n";
+  }
+  std::cout << "run finished\n";
+}
+```
+下面是准确的做法
+```C++
+int main() {
+  std::promise<std::exception_ptr> promise;
+  std::thread thread([&promise]() {
+    for (unsigned int i = 0U; i < 3U; ++i) {
+      std::cout << std::to_string(i) << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(1U));
+    }
+    promise.set_exception(std::make_exception_ptr(
+        std::runtime_error("test child thread exception")));
+  });
+  std::this_thread::sleep_for(std::chrono::seconds(4U));
+  std::cout << "sleep finished\n";
+  try {
+    thread.join();
+    promise.get_future().get();
+  } catch (std::runtime_error e) {
+    std::cout << e.what() << std::endl;
+  }
+  std::cout << "run finished\n";
+}
+```
 
+### 线程对信号的过滤
+信号掩码（mask）是针对每个线程而言。（对于多线程程序来说，并不存在一个作用
+于整个进程范围的信号掩码，可以管理所有线程。）使用 Pthreads API 所定义的函数
+pthread_sigmask()，各线程可独立阻止或放行各种信号。通过操作每个线程的信号掩
+码，应用程序可以控制哪些线程可以处理进程收到的信号

@@ -60,3 +60,35 @@ int main() {
   input.close();
   printf("%s", content.get());
 ```
+### C++应用折叠和完美转发
+```C++
+
+class JesseTest {
+public:
+  void printMe(uint32_t&& me){ // 调用层面通过std::forward可以实现完美转发
+    printf("me=%d\n", me);
+  }
+  void test(uint32_t& me){}
+  template<typename T>
+  void printMeBest(T&& me){ // 函数定义层面的完美转发
+    printf("best me=%d\n", static_cast<uint32_t>(me));
+  }
+  ~JesseTest() { printf("destruct\n"); }
+};
+
+int main() {
+  JesseTest test;
+  test.printMe(42);
+  uint32_t me = 42;
+  //test.printMe(me); 编译错误
+  test.printMe(std::forward<uint32_t>(me)); // 自动转化为右值，而且不会触发copy
+  test.printMe(std::move(me));
+  //test.printMe(std::ref(me)); 编译错误
+  test.test(std::ref(me));// ref处理单个引用
+  //test.test(42);编译报错，单个引用并不接受右值引用
+  test.printMeBest(me);
+  test.printMeBest(std::ref(me));
+  test.printMeBest(std::move(me));
+  test.printMeBest(42);
+}
+```

@@ -111,3 +111,14 @@ int main() {
   //only4BytesParam(hello); compile error
 }
 ```
+### 绕过内存对齐，直接操作内存
+```C++
+std::array<uint8_t, sizeof(void *) + sizeof(uint32_t) + sizeof(void *)> arr;
+uint32_t a = 42;
+uint32_t *ptr = &a;
+void *targetPtr = &arr;
+std::memcpy(&arr[0], &ptr, sizeof(void *));//写在0位置
+std::memcpy(&arr[sizeof(void *)], &a, sizeof(uint32_t));//写在后面
+std::memcpy(&arr[sizeof(void *) + sizeof(uint32_t)], &targetPtr,
+            sizeof(void *));
+```

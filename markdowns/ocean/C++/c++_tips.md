@@ -122,3 +122,27 @@ std::memcpy(&arr[sizeof(void *)], &a, sizeof(uint32_t));//写在后面
 std::memcpy(&arr[sizeof(void *) + sizeof(uint32_t)], &targetPtr,
             sizeof(void *));
 ```
+
+### C++一个进度打印程序
+```C++
+int main() {
+  std::cout << "Process:\n";
+  uint8_t percentage = 0;
+  while (percentage <= 100) {
+    uint8_t show = std::ceil(percentage/5);
+    std::array<char, 21> printArray;
+    std::fill(printArray.begin(), printArray.end(), ' ');
+    printArray.at(20) = '\0';
+    for (int i = 0; i <= show; ++i) {
+      printArray.at(i) = '=';
+    }
+    std::cout << printArray.data() << std::to_string(percentage) <<"%\r";
+    std::cout.flush();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    percentage++;
+  }
+  std::cout << "\n";
+  std::cout << "run finished\n";
+  return 0;
+}
+```

@@ -146,3 +146,16 @@ int main() {
   return 0;
 }
 ```
+
+
+### 右值引用可以传递给左值const引用声明的函数
+```C++
+void printInt(const int & param) {
+  std::cout << param << std::endl;
+}
+
+int main() {
+  printInt(getOne());
+  return 0;
+}
+```

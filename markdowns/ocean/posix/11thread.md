@@ -316,3 +316,161 @@ int main() {
 于整个进程范围的信号掩码，可以管理所有线程。）使用 Pthreads API 所定义的函数
 pthread_sigmask()，各线程可独立阻止或放行各种信号。通过操作每个线程的信号掩
 码，应用程序可以控制哪些线程可以处理进程收到的信号
+
+### 取消一个线程
+
+pthread_cancel和pthread_join（清理线程）
+```C++
+#include <pthread.h>
+#include <unistd.h>
+
+static void* threadFun(void* args){
+  int j = 0;
+  printf("New thread start:\n");
+  for(j=0;;j++){
+    printf("loop print: %d\n", j);
+    sleep(1);
+  }
+  return nullptr;
+}
+
+int main() {
+  pthread_t pth;
+  int s;
+  void *res;
+  s = pthread_create(&pth, NULL, threadFun, NULL);
+  if (s!=0) {
+    exit(1);
+  }
+  sleep(3);
+  s = pthread_cancel(pth);
+  pthread_join(pth, &res);
+  if (res == PTHREAD_CANCELED) {
+    printf("thread canceled successfully\n");
+  } else {
+    printf("thread cannot be canceled\n");
+  }
+}
+```
+因为线程的取消需要线程运行到可取消点函数，如果没有执行到，线程可能永远不会被取消。  
+可以共过`pthread_testcancel()`来检测线程是否是可以被取消的。  
+
+### 进程取消时的清理工作
+线程在执行到取消点时如果只是草草收场，这会将共享
+变量以及 Pthreads 对象（例如互斥量）置于一种不一致状态，可能导致进程中其他线程产生错
+误结果、死锁，甚至造成程序崩溃。为规避这一问题，线程可以设置一个或多个清理函数，当线
+程遭取消时会自动运行这些函数，在线程终止之前可执行诸如修改全局变量，解锁互斥量等动作。
+
+函数 pthread_cleanup_push()和 pthread_cleanup_pop()分别负责向调用线程的清理函数栈
+添加和移除清理函数。
+
+下面是一个线程可以被取消并且正确清理其中的资源的多线程例子：  
+```C++
+#include <cstddef>
+#include <pthread.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+static pthread_mutex_t _mutex;
+static pthread_cond_t _cond;
+static int _global;
+
+static void cleanUp(void* args) {
+
+  if(args) {
+    free(args);
+  }
+  pthread_mutex_unlock(&_mutex);
+}
+
+static void* thread_fun(void* args) {
+  pthread_cleanup_push(cleanUp, nullptr);
+  for (int i = 0; i < 100000; ++i) {
+    pthread_mutex_lock(&_mutex);
+    _global++;
+    pthread_testcancel(); // cancel point, almost no cost
+    if(i%10000==0) {
+      sleep(2);
+    }
+    pthread_mutex_unlock(&_mutex);
+  }
+  pthread_cleanup_pop(1);
+  return nullptr;
+}
+
+int main(){
+
+  pthread_t p1, p2;
+  void * res;
+  pthread_create(&p1, NULL, thread_fun, NULL);
+  pthread_create(&p2, NULL, thread_fun, NULL);
+  sleep(7);
+  pthread_cancel(p1);
+  pthread_join(p1, &res);
+  if(res == PTHREAD_CANCELED) {
+    printf("p1 canceled successfully\n");
+  }
+  printf("target: %d\n", _global);
+}
+```
+
+### 多线程中调用多进程的问题
+当多线程进程调用 fork()时，仅会将发起调用的线程复制到子进程中。（子进程中该线程
+的线程 ID 与父进程中发起 fork()调用线程的线程 ID 相一致。）其他线程均在子进程中消失，
+也不会为这些线程调用清理函数以及针对线程特有数据的解构函数。
+
+只要有任一线程调用了 exec()系列函数之一时，调用程序将被完全替换。除了调用 exec()的线
+程之外，其他所有线程都将立即消失。没有任何线程会针对线程特有数据执行解构函数
+（destructor），也不会调用清理函数（cleanup handler）。该进程的所有互斥量（为进程私有）和
+属于进程的条件变量都会消失。调用 exec()之后，调用线程的线程 ID 是不确定的。
+
+
+不要将线程与信号混合使用，只要可能多线程应用程序的设计应该避免使用信号。如果
+多线程应用必须处理异步信号的话，通常最简洁的方法是所有的线程都阻塞信号，创建一个
+专门的线程调用 sigwait()函数（或者类似的函数）来接收收到的信号。这个线程就可以安全地
+执行像修改共享内存（处于互斥量的保护之下）和调用非异步信号安全的函数
+
+
+正确多线程中处理信号的例子：
+```C++
+#include <bits/types/sigset_t.h>
+#include <csignal>
+#include <cstddef>
+#include <iostream>
+#include <pthread.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void *sigHandlerThreadFun(void *args) {
+  sigset_t set;
+  int sig;
+  sigemptyset(&set);
+  sigaddset(&set, SIGTSTP);
+  pthread_sigmask(SIG_BLOCK, &set, nullptr);
+  printf("waiting... sigtstp\n");
+  while (true) {
+    sigwait(&set, &sig); // 子线程等待SIGTSTP然后处理
+    printf("got it sigtstp\n");
+  }
+  return nullptr;
+}
+
+int main() {
+
+  // 主线程中碰到信号，直接阻塞掉，不去处理
+  sigset_t set;
+  sigemptyset(&set);
+  sigaddset(&set, SIGTSTP);
+  sigaddset(&set, SIGUSR1);
+  pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+  pthread_t tid;
+  void *res;
+  pthread_create(&tid, nullptr, sigHandlerThreadFun, nullptr);
+  pthread_join(tid, &res);
+  return 0;
+}
+```

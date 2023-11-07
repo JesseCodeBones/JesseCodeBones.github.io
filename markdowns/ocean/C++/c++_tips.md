@@ -159,3 +159,25 @@ int main() {
   return 0;
 }
 ```
+
+### 通过一个priority_queue边排序边添加元素
+```C++
+  auto myCompare = [](const int &a, const int &b) { return a < b; };
+  std::priority_queue<int, std::vector<int>, decltype(myCompare)> myQueue(
+      myCompare);
+  myQueue.push(1);
+  myQueue.push(3);
+  myQueue.push(2);
+
+  std::vector<int> target;
+
+  while (!myQueue.empty()) {
+    auto item = myQueue.top();
+    target.push_back(item);
+    myQueue.pop();
+  }
+
+  for (auto& item : target) {
+    std::cout << item << std::endl;
+  }
+```

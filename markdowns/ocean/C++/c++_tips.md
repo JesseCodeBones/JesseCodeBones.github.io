@@ -181,3 +181,106 @@ int main() {
     std::cout << item << std::endl;
   }
 ```
+
+### C++ http server
+```C++
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include "string.h"
+
+const int PORT = 8889;
+
+std::string generateResponse() {
+   std::stringstream response;
+   response << "HTTP/1.1 200 OK\r\n";
+   response << "Content-Type: text/html; charset=UTF-8\r\n";
+   response << "\r\n";
+   response << "<html><body>";
+   response << "<h1>Hello, World!</h1>";
+   response << "</body></html>";
+   return response.str();
+}
+
+int main() {
+   // 创建socket
+   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+   if (sockfd == -1) {
+       std::cerr << "Failed to create socket." << std::endl;
+       return 1;
+   }
+   
+   // 绑定socket到本地地址和端口
+   sockaddr_in addr{};
+   addr.sin_family = AF_INET;
+   addr.sin_addr.s_addr = INADDR_ANY;
+   addr.sin_port = htons(PORT);
+   if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+       std::cerr << "Failed to bind socket to port " << PORT << std::endl;
+       close(sockfd);
+       return 1;
+   }
+   
+   // 监听连接
+   if (listen(sockfd, 10) == -1) {
+       std::cerr << "Failed to listen on socket." << std::endl;
+       close(sockfd);
+       return 1;
+   }
+   
+   std::cout << "Server is running on port " << PORT << std::endl;
+
+   
+   
+   while (true) {
+       sockaddr_in addr;
+       socklen_t len;
+       int clientfd = accept(sockfd, (sockaddr*)&addr, &len);
+       printf("IP address is: %s\n", inet_ntoa(addr.sin_addr));
+       printf("port is: %d\n", (int) ntohs(addr.sin_port));
+       
+       
+       if (clientfd == -1) {
+           std::cerr << "Failed to accept client connection." << std::endl;
+           close(sockfd);
+           return 1;
+       }
+       
+       // 读取请求
+       constexpr int BUFFER_SIZE = 1024;
+       char buffer[BUFFER_SIZE];
+       memset(buffer, 0, BUFFER_SIZE);
+       if (read(clientfd, buffer, BUFFER_SIZE - 1) == -1) {
+           std::cerr << "Failed to read request from client." << std::endl;
+           close(clientfd);
+           close(sockfd);
+           return 1;
+       }
+       
+       std::cout << "Received request:\n" << buffer << std::endl;
+       
+       // 生成响应
+       std::string response = generateResponse();
+       
+       // 发送响应
+       if (write(clientfd, response.c_str(), response.length()) == -1) {
+           std::cerr << "Failed to send response to client." << std::endl;
+           close(clientfd);
+           close(sockfd);
+           return 1;
+       }
+       
+       // 关闭连接
+       close(clientfd);
+   }
+   
+   // 关闭socket
+   close(sockfd);
+
+   return 0;
+}
+```

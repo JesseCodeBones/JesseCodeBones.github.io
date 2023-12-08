@@ -284,3 +284,105 @@ int main() {
    return 0;
 }
 ```
+
+
+### C++ GC demo (20)
+```C++
+#include <deque>
+#include <queue>
+#include <set>
+#include <type_traits>
+#include <vector>
+ 
+void sweep_clear_gc();
+ 
+struct object {
+  virtual ~object() = default;
+  void __visit() const;
+  virtual void __visit_children() const {}
+};
+ 
+struct global : public object {
+  global(object *obj) : m_obj(obj) {}
+  object *m_obj;
+};
+ 
+global a{nullptr};
+ 
+std::deque<std::set<object const *>> root{{&a}};
+ 
+std::set<object const *> white{};
+std::set<object const *> black{};
+ 
+void object::__visit() const {
+  white.erase(this);
+  black.insert(this);
+  __visit_children();
+}
+ 
+struct array : public object {
+  std::vector<object *> elements{};
+ 
+  virtual void __visit_children() const override {
+    this->object::__visit_children();
+    for (auto obj : elements) {
+      obj->__visit();
+    }
+  }
+};
+ 
+void on_function_in() { root.push_back({}); }
+void on_function_out() { root.pop_back(); }
+ 
+template <class T>
+concept Object = std::is_base_of_v<object, T>;
+ 
+void push_stack_object(object const *obj) { root.back().insert(obj); }
+template <Object T> T *create_stack_object() {
+  auto obj = new T();
+  push_stack_object(obj);
+  return obj;
+}
+ 
+void mark() {
+  for (auto &objs : root) {
+    for (auto obj : objs) {
+      obj->__visit();
+    }
+  }
+}
+void sweep() {
+  for (auto obj : white) {
+    delete obj;
+  }
+}
+ 
+void sweep_clear_gc() {
+  mark();
+  sweep();
+ 
+  std::swap(white, black);
+}
+ 
+// -----------------------------------------------------
+// -----------------------------------------------------
+// -----------------------------------------------------
+ 
+void foo(array *arr) {
+  on_function_in();
+  // push_stack_object(arr);
+ 
+  arr = create_stack_object<array>();
+ 
+  on_function_out();
+}
+ 
+int main() {
+  on_function_in();
+ 
+  auto arr = create_stack_object<array>();
+  foo(arr);
+ 
+  on_function_out();
+}
+```

@@ -399,3 +399,12 @@ function(EnableVisualStudioStaticCheck target)
     endif()
 endfunction()
 ```
+```
+if(ENABLE_CLANG_TIDY)
+    EnableVisualStudioStaticCheck(${PROJECT_NAME})
+    if(ENABLE_WERROR)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2")
+    endif()
+endif()
+
+```

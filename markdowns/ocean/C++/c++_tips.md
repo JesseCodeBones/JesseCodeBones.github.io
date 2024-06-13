@@ -408,3 +408,61 @@ if(ENABLE_CLANG_TIDY)
 endif()
 
 ```
+
+### C++ memory barrier
+1. 防止指令重排序
+
+处理器和编译器可能会出于优化目的重排序指令。这种重排序在单线程环境中通常不会引起问题，但在多线程环境中可能会导致数据竞争和难以调试的错误。内存屏障可以防止这种重排序，确保指令按照程序员预期的顺序执行。
+2. 确保内存可见性
+
+在多处理器系统中，各个处理器可能会有自己的高速缓存，导致一个处理器上的修改对其他处理器不可见。内存屏障可以确保一个处理器对内存的更改在其他处理器上可见，从而保证数据的一致性。
+3. 同步多线程操作
+
+在多线程编程中，内存屏障用于确保线程之间的操作顺序。例如，生产者-消费者模型中，生产者线程需要确保在生产的数据对消费者线程可见之前，所有写操作都已经完成。内存屏障可以确保这种顺序。
+
+```C++
+#include <atomic>
+#include <thread>
+#include <iostream>
+
+std::atomic<int> data[5];
+std::atomic<bool> ready(false);
+
+void producer() {
+    data[0].store(1, std::memory_order_relaxed);
+    data[1].store(2, std::memory_order_relaxed);
+    data[2].store(3, std::memory_order_relaxed);
+    data[3].store(4, std::memory_order_relaxed);
+    data[4].store(5, std::memory_order_relaxed);
+    
+    std::atomic_thread_fence(std::memory_order_release);
+    ready.store(true, std::memory_order_relaxed);
+}
+
+void consumer() {
+    while (!ready.load(std::memory_order_relaxed)) {
+        std::this_thread::yield();
+    }
+    
+    std::atomic_thread_fence(std::memory_order_acquire);
+    std::cout << "data[0]: " << data[0].load(std::memory_order_relaxed) << "\n";
+    std::cout << "data[1]: " << data[1].load(std::memory_order_relaxed) << "\n";
+    std::cout << "data[2]: " << data[2].load(std::memory_order_relaxed) << "\n";
+    std::cout << "data[3]: " << data[3].load(std::memory_order_relaxed) << "\n";
+    std::cout << "data[4]: " << data[4].load(std::memory_order_relaxed) << "\n";
+}
+
+int main() {
+    std::thread t1(producer);
+    std::thread t2(consumer);
+    
+    t1.join();
+    t2.join();
+    
+    return 0;
+}
+
+```
+
+### assert
+assert only execute when debug mode is off 

@@ -466,3 +466,42 @@ int main() {
 
 ### assert
 assert only execute when debug mode is off 
+
+### C++ vtable
+
+``` C++
+#include <cstddef>
+#include <iostream>
+
+class Base {
+public:
+  virtual void print() { std::cout << "Base class print function \n"; }
+};
+
+class Derived : public Base {
+public:
+  virtual void childPrint() { std::cout << "Derived class childPrint function \n"; } // in vtable, it is the second element
+  void print() { std::cout << "Derived class print function \n"; } // it is the first element, so it is the same as Base class print function
+};
+
+int main() {
+  Base *base = new Base();
+  Derived *derived = new Derived();
+  void (*printFunBase)() = NULL;
+  void (*printFunDerived)() = NULL;
+  void *vptrBase = *(void **)base;
+  void *vptrDerived = *(void **)derived;
+  std::cout << "Base vptr: " << vptrBase << std::endl;
+  std::cout << "Derived vptr: " << vptrDerived << std::endl;
+
+  std::cout << "Base vptr value: " << (void *)*((void **)vptrBase) << std::endl;
+  std::cout << "Derived vptr value: " << (void *)*((void **)vptrDerived)
+            << std::endl;
+  void *baseFunPtr = (void *)*((void **)vptrBase);
+  void *derivedFunPtr = (void *)*((void **)vptrDerived);
+  auto * childPrintPtr = *((void **)vptrDerived + 1);
+  std::cout << "Base vptr value of childPrintPtr: " << childPrintPtr << std::endl;
+  return 0;
+}
+
+```

@@ -545,7 +545,7 @@ int main() {
 ### C++模板函数的实现要放在.hpp里，不要放在.cpp里
 
 
-### functional object
+### function object
 
 functional object only have a member function, and it is offen the () operator function.  
 and functional object instance can be transfer just like a function pointer in C

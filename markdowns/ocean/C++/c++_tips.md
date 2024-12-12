@@ -505,3 +505,85 @@ int main() {
 }
 
 ```
+
+### explicit 参数的作用
+防止单参数构造函数进行隐式类型转换
+```C++
+#include <iostream>
+#include <cstdint>  // 引入int32_t类型的头文件
+
+class MyClass {
+private:
+    int32_t num;
+public:
+    // 单参数构造函数
+    MyClass(int32_t n) : num(n) {
+        std::cout << "调用单参数构造函数，参数值为: " << num << std::endl;
+    }
+    // 拷贝构造函数
+    MyClass(const MyClass& other) : num(other.num) {
+        std::cout << "调用拷贝构造函数，拷贝的值为: " << num << std::endl;
+    }
+    // 移动构造函数
+    MyClass(MyClass&& other) : num(other.num) {
+        std::cout << "调用移动构造函数，移动的值为: " << num << std::endl;
+    }
+    // 析构函数
+    ~MyClass() {
+        std::cout << "调用析构函数，释放对象，对象的值为: " << num << std::endl;
+    }
+    void printNum() const {
+        std::cout << "对象中的值为: " << num << std::endl;
+    }
+};
+int main() {
+    MyClass obj = 42;
+    return 0;
+}
+```
+
+### C++模板函数的实现要放在.hpp里，不要放在.cpp里
+
+
+### functional object
+
+functional object only have a member function, and it is offen the () operator function.  
+and functional object instance can be transfer just like a function pointer in C
+
+Demo  
+
+``` C++
+#include <iostream>
+#include <cstdint>  // 引入int32_t类型的头文件
+#include <vector>
+#include <cstring>
+
+template <typename Object, typename Comparator>
+const Object &findMax(const std::vector<Object> & arr, Comparator cmp) {
+  uint32_t maxIndex = 0;
+  for (uint32_t i = 1; i < arr.size(); ++i) {
+    if (cmp(arr[maxIndex], arr[i])) {
+      maxIndex = i;
+    }
+  }
+  return arr[maxIndex];
+}
+
+class CaseInsensitiveCompare {
+public:
+  bool operator() (const std::string &lhs, const std::string &rhs) const {
+    return strcmp(lhs.c_str(), rhs.c_str()) < 0;
+  }
+};
+
+class TestClass{};
+
+int main() {
+
+std::vector<std::string> strs = {"a", "b", "c"};
+CaseInsensitiveCompare cmp;
+std::cout << findMax(strs, cmp) << '\n';
+    
+}
+
+```

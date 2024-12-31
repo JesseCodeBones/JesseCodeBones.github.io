@@ -569,6 +569,12 @@ const Object &findMax(const std::vector<Object> & arr, Comparator cmp) {
   return arr[maxIndex];
 }
 
+#include <functional>
+template< typename Object>
+const Object& findMax(const std::vector<Object> arr) {
+  return findMax(arr, std::less<Object>());
+}
+
 class CaseInsensitiveCompare {
 public:
   bool operator() (const std::string &lhs, const std::string &rhs) const {
@@ -576,13 +582,16 @@ public:
   }
 };
 
+
+
+
 class TestClass{};
 
 int main() {
 
 std::vector<std::string> strs = {"a", "b", "c"};
 CaseInsensitiveCompare cmp;
-std::cout << findMax(strs, cmp) << '\n';
+std::cout << findMax(strs) << '\n';
     
 }
 

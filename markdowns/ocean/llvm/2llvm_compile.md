@@ -10,4 +10,4 @@
 `ninja -j1`  
 
 ### 带clang的整体编译
-`cmake -S llvm -B build   -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS=clang -DLLVM_INCLUDE_TESTS=OFF `
+`cmake -S llvm -B build   -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld" -DLLVM_INCLUDE_TESTS=OFF `

@@ -10,7 +10,7 @@
 `ninja -j1`  
 
 ### 带clang的整体编译
-`cmake -S llvm -B build   -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld" -DLLVM_INCLUDE_TESTS=OFF `
+`cmake -S llvm -B build   -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;mlir" -DLLVM_INCLUDE_TESTS=OFF -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache `
 
 
 ### 通过backend测试调试CodeGen

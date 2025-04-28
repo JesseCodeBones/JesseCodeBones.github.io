@@ -101,3 +101,7 @@ target_link_libraries(toyc-ch7
 ![alt text](image-2.png)
 ![alt text](image-3.png)
 ![alt text](image-4.png)
+
+### 最简单lower test case
+![alt text](image-5.png)
+![alt text](image-6.png)

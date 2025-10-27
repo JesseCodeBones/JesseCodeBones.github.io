@@ -21,32 +21,48 @@
                 <div class="">
                     <nav class="navbar bg-primary bg-dark"  role="navigation" >
                         <span class="navbar-text">
-                            Jesse's Blog - peace and health to you!
+                            JesseChen://path.to.peace
                         </span>
-                        <div>
-                            <ul class="nav navbar-nav">
-                                <li>
-                                    <li class="dropdown">
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                            Classification
-                                            <b class="caret"></b>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li><a href="#" @click="fetchArticles('arm')">ARM</a></li>
-                                            <li><a href="#" @click="fetchArticles('c++')">C++</a></li>
-                                            <li><a href="#" @click="fetchArticles('Kotlin')">Kotlin</a></li>
-                                            <li><a href="#" @click="fetchArticles('Android')">Android</a></li>
-                                            <li><a href="#" @click="fetchArticles('WASM')">WASM</a></li>
-                                            <li><a href="#" @click="fetchArticles('llvm')">LLVM</a></li>
-                                            <li class="divider"></li>
-                                            <li><a href="#" @click="fetchArticles('Christian')">Christian</a></li>
-                                            <li class="divider"></li>
-                                            <li><a href="#" @click="fetchArticles('life')">Life Blog</a></li>
-                                        </ul>
-                                    </li>
+
+                        <ul class="nav navbar-nav" >
+                            <li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle bg-primary" data-toggle="dropdown">
+                                        Famous Security Researchers
+                                        <b class="caret"></b>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="https://x.com/tehjh" >Jann Horn (Meltdown, Spectre vulnerability, Google P0 researcher)</a></li>
+                                        <li><a href="https://x.com/keenjoy95?lang=zh" >王宇(国内内核安全研究员)</a></li>
+                                    </ul>
                                 </li>
-                            </ul>
-                        </div>
+                            </li>
+                        </ul>
+
+
+                        <ul class="nav navbar-nav" >
+                            <li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle bg-primary" data-toggle="dropdown">
+                                        Documentation Classification
+                                        <b class="caret"></b>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#" @click="fetchArticles('arm')">ARM</a></li>
+                                        <li><a href="#" @click="fetchArticles('c++')">C++</a></li>
+                                        <li><a href="#" @click="fetchArticles('Kotlin')">Kotlin</a></li>
+                                        <li><a href="#" @click="fetchArticles('Android')">Android</a></li>
+                                        <li><a href="#" @click="fetchArticles('WASM')">WASM</a></li>
+                                        <li><a href="#" @click="fetchArticles('llvm')">LLVM</a></li>
+                                        <li class="divider"></li>
+                                        <li><a href="#" @click="fetchArticles('Christian')">Christian</a></li>
+                                        <li class="divider"></li>
+                                        <li><a href="#" @click="fetchArticles('life')">Life Blog</a></li>
+                                    </ul>
+                                </li>
+                            </li>
+                        </ul>
+                        
                     </nav>
                 </div>
             </div>

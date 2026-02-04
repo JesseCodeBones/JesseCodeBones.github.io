@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple WTR Test</title>
+    <script>
+        // 必须引入 testRunner，因为它包含了 WTR 运行时的控制接口
+        if (window.testRunner)
+            testRunner.dumpAsText(); // 告诉 WTR 只需要输出文本结果，而不是渲染图像
+        console.log(JSON.stringify(window.internals)); // 确保 testRunner 已经加载
+
+        function runTest() {
+            const container = document.getElementById('output');
+            
+            // 1. 执行一个简单的DOM操作
+            const newElement = document.createElement('p');
+            newElement.textContent = "Test Passed: DOM element successfully created.";
+            container.appendChild(newElement);
+
+            // 2. 检查一个基本的 JavaScript 功能
+            const result = 5 + 5;
+            container.innerHTML += `<p>Calculation Result: ${result}</p>`;
+            
+            // 3. 标记测试完成 (对于异步测试非常重要，但此处仅作为示例)
+            testRunner.notifyDone(); 
+        }
+    </script>
+</head>
+<body onload="runTest()">
+    <div id="output">Initial Text</div>
+</body>
+</html>
